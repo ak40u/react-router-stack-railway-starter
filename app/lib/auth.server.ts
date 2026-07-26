@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto"
+
 import bcrypt from "bcryptjs"
 import { createCookieSessionStorage, redirect } from "react-router"
 
@@ -33,15 +35,17 @@ export async function register(email: string, password: string) {
   return prisma.user.create({ data: { email, passwordHash } })
 }
 
+// A real hash of a value nobody knows, computed once at startup. When the email
+// does not exist, the password is compared against this instead of returning
+// early - so both answers cost the same. It has to be a genuine hash: bcrypt
+// rejects a malformed one immediately, in well under a millisecond against the
+// ~200ms of real work, and that gap is enough to tell an attacker which emails
+// are registered.
+const ABSENT_USER_HASH = bcrypt.hashSync(randomBytes(32).toString("hex"), 12)
+
 export async function login(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } })
-
-  // Hash against a throwaway value when the user does not exist, so a missing
-  // account and a wrong password take the same amount of time to answer. The
-  // difference is otherwise measurable, and it tells an attacker which emails
-  // are registered.
-  const hash = user?.passwordHash ?? "$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidin"
-  const ok = await bcrypt.compare(password, hash)
+  const ok = await bcrypt.compare(password, user?.passwordHash ?? ABSENT_USER_HASH)
 
   return user && ok ? user : null
 }

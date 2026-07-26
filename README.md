@@ -38,9 +38,11 @@ Sign up, log in, write notes, delete them. Your notes; not anyone else's.
 ## Five decisions worth understanding
 
 - **Login takes the same time whether or not the account exists.** A missing user
-  is compared against a throwaway hash rather than returning early. Skipping the
-  hash is measurably faster, and that difference tells an attacker which emails
-  are registered.
+  is compared against a real hash of a random value, computed once at startup,
+  rather than returning early. It has to be a genuine hash — bcrypt rejects a
+  malformed one in well under a millisecond, against ~200ms of real work, and
+  that gap is enough to tell an attacker which emails are registered. Measured,
+  not assumed: 205ms either way.
 - **Ownership is part of the query.** Deleting a note filters on `userId` as well
   as `id`, so guessing someone else's id changes nothing. A check that the caller
   is trusted to have made is not a check.
