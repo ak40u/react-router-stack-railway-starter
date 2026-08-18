@@ -34,6 +34,7 @@ Sign up, log in, write notes, delete them. Your notes; not anyone else's.
 | `app/routes/notes.tsx` | The data, scoped to the signed-in user |
 | `prisma/schema.prisma` | `User` and `Note`, cascade on delete |
 | `railway.json` | Migrations pre-deploy, health check on `/healthz` |
+| `predeploy.sh` | Runs the migration, retrying only while Postgres is still unreachable |
 
 ## Five decisions worth understanding
 
